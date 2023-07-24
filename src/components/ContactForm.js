@@ -11,7 +11,8 @@ const ContactForm = () => {
 			email: email.value,
 			message: message.value,
 		};
-		let response = await fetch('http://localhost:5000/contact', {
+		console.log(details);
+		let response = await fetch('http://localhost:3000/contact', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json;charset=utf-8',
@@ -27,10 +28,6 @@ const ContactForm = () => {
 			<div>
 				<label htmlFor='name'>Name:</label>
 				<input type='text' id='name' required />
-			</div>
-			<div>
-				<label htmlFor='phone'>Phone Number:</label>
-				<input type='number' id='phone-number' required />
 			</div>
 			<div>
 				<label htmlFor='email'>Email:</label>

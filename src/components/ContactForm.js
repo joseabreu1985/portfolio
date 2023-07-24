@@ -2,42 +2,76 @@ import React, { useState } from 'react';
 
 const ContactForm = () => {
 	const [status, setStatus] = useState('Submit');
-	const handleSubmit = async (e) => {
+	const [mailerState, setMailerState] = useState({
+		name: '',
+		email: '',
+		message: '',
+	});
+
+	function handleStateChange(e) {
+		setMailerState((prevState) => ({
+			...prevState,
+			[e.target.name]: e.target.value,
+		}));
+	}
+
+	const submitEmail = async (e) => {
 		e.preventDefault();
 		setStatus('Sending...');
-		const { name, email, message } = e.target.elements;
-		let details = {
-			name: name.value,
-			email: email.value,
-			message: message.value,
-		};
-		console.log(details);
-		let response = await fetch('http://localhost:3000/contact', {
+		console.log({ mailerState });
+		const response = await fetch('http://localhost:3000/contact', {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json;charset=utf-8',
+				'Content-type': 'application/json',
 			},
-			body: JSON.stringify(details),
-		});
+			body: JSON.stringify({ mailerState }),
+		})
+			.then((res) => res.json())
+			.then(async (res) => {
+				const resData = await res;
+				console.log(resData);
+				if (resData.status === 'success') {
+					alert('Message Sent');
+				} else if (resData.status === 'fail') {
+					alert('Message failed to send');
+				}
+			})
+			.then(() => {
+				setMailerState({
+					email: '',
+					name: '',
+					message: '',
+				});
+			});
 		setStatus('Submit');
-		let result = await response.json();
-		alert(result.status);
+		let result = response;
+		console.log('result', result);
 	};
+
 	return (
-		<form onSubmit={handleSubmit}>
-			<div>
-				<label htmlFor='name'>Name:</label>
-				<input type='text' id='name' required />
-			</div>
-			<div>
-				<label htmlFor='email'>Email:</label>
-				<input type='email' id='email' required />
-			</div>
-			<div>
-				<label htmlFor='message'>Message:</label>
-				<textarea id='message' required />
-			</div>
-			<button type='submit'>{status}</button>
+		<form onSubmit={submitEmail}>
+			<fieldset>
+				<legend>React NodeMailer Contact Form</legend>
+				<input
+					placeholder='Name'
+					onChange={handleStateChange}
+					name='name'
+					value={mailerState.name}
+				/>
+				<input
+					placeholder='Email'
+					onChange={handleStateChange}
+					name='email'
+					value={mailerState.email}
+				/>
+				<textarea
+					placeholder='Message'
+					onChange={handleStateChange}
+					name='message'
+					value={mailerState.message}
+				/>
+				<button type='submit'>{status}</button>
+			</fieldset>
 		</form>
 	);
 };

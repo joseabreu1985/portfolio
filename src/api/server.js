@@ -1,47 +1,49 @@
 const express = require('express');
-const router = express.Router();
-const cors = require('cors');
 const nodemailer = require('nodemailer');
-
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use('/', router);
-app.listen(8080, () => console.log('Server Running...'));
+const cors = require('cors');
 
-const contactEmail = nodemailer.createTransport({
+require('dotenv').config();
+
+app.use(express.json());
+app.use(cors());
+
+let transporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
-		user: 'josearmandoabreu.85@gmail.com',
-		pass: '!Chrisander17547',
+		type: 'OAuth2',
+		user: process.env.EMAIL,
+		pass: process.env.PASSWORD,
+		clientId: process.env.OAUTH_CLIENTID,
+		clientSecret: process.env.OAUTH_CLIENT_SECRET,
+		refreshToken: process.env.OAUTH_REFRESH_TOKEN,
 	},
 });
 
-contactEmail.verify((error) => {
-	if (error) {
-		console.log(error);
-	} else {
-		console.log('Ready to Send');
-	}
+transporter.verify((err, success) => {
+	err ? console.log(err) : console.log(`=== Server is ready to take messages: ${success} ===`);
 });
 
-router.post('/contact', (req, res) => {
-	const name = req.body.name;
-	const email = req.body.email;
-	const message = req.body.message;
-	const mail = {
-		from: name,
-		to: 'josearmandoabreu.85@gmail.com',
-		subject: 'Contact Form Submission',
-		html: `<p>Name: ${name}</p>
-           <p>Email: ${email}</p>
-           <p>Message: ${message}</p>`,
+app.post('/contact', function(req, res) {
+	let mailOptions = {
+		from: `${req.body.mailerState.email}`,
+		to: process.env.EMAIL,
+		subject: `Message from: ${req.body.mailerState.email}`,
+		text: `${req.body.mailerState.message}`,
 	};
-	contactEmail.sendMail(mail, (error) => {
-		if (error) {
-			res.json({ status: 'ERROR' });
+
+	transporter.sendMail(mailOptions, function(err, data) {
+		if (err) {
+			res.json({
+				status: 'fail',
+			});
 		} else {
-			res.json({ status: 'Message Sent' });
+			console.log('== Message Sent ==');
+			res.json({
+				status: 'success',
+			});
 		}
 	});
 });
+
+app.listen(process.env.PORT, () => console.log(`Server is running on port: ${process.env.PORT}`));
